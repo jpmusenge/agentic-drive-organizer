@@ -16,10 +16,131 @@ class ClassificationResult:
     confidence: str
     reasoning: str
 
+
+# mock classifier for testing without API calls
+class MockClassifier:
+    # keywords that map to folder categories
+    KEYWORD_RULES = {
+        'physics': 'Physics Files',
+        'newton': 'Physics Files',
+        'quantum': 'Physics Files',
+        'thermodynamics': 'Physics Files',
+        
+        'resume': 'Resume',
+        'cv': 'Resume',
+        'cover_letter': 'Job Applications',
+        'cover letter': 'Job Applications',
+        'application': 'Job Applications',
+        'job': 'Job Applications',
+        
+        'receipt': 'Financial Records',
+        'invoice': 'Financial Records',
+        'budget': 'Financial Records',
+        'tax': 'Financial Records',
+        'bank': 'Financial Records',
+        
+        'vacation': 'Travel Documents',
+        'flight': 'Travel Documents',
+        'hotel': 'Travel Documents',
+        'itinerary': 'Travel Documents',
+        'passport': 'Travel Documents',
+        
+        'project': 'Projects',
+        'code': 'Projects',
+        'github': 'Projects',
+        
+        'notes': 'Course Notes',
+        'lecture': 'Course Notes',
+        'homework': 'Course Notes',
+        'assignment': 'Course Notes',
+        'exam': 'Course Notes',
+        
+        'certificate': 'Certificates',
+        'certification': 'Certificates',
+        'diploma': 'Certificates',
+        
+        'photo': 'Photos',
+        'img': 'Photos',
+        'image': 'Photos',
+        'screenshot': 'Screenshots',
+    }
+    
+    def __init__(self):
+        print("✓ Mock Classifier initialized (no API calls)\n")
+        print("  ℹ This uses keyword matching to simulate AI classification.")
+        print("  ℹ Switch to real AI by setting use_mock=False once quota resets.\n")
+    
+    def classify_file(self,
+                      file_name: str,
+                      file_id: str,
+                      existing_folders: list[str],
+                      file_content_snippet: Optional[str] = None) -> ClassificationResult:
+        """
+        Classify a file using simple keyword matching.
+        """
+        
+        # convert filename to lowercase for matching
+        name_lower = file_name.lower()
+        
+        # try to match keywords
+        suggested_folder = None
+        matched_keyword = None
+        
+        for keyword, folder in self.KEYWORD_RULES.items():
+            if keyword in name_lower:
+                suggested_folder = folder
+                matched_keyword = keyword
+                break
+        
+        # check if the suggested folder exists
+        if suggested_folder:
+            # check if it matches an existing folder (case-insensitive)
+            is_new = True
+            for existing in existing_folders:
+                if existing.lower() == suggested_folder.lower():
+                    suggested_folder = existing  # Use the existing folder's exact name
+                    is_new = False
+                    break
+            
+            return ClassificationResult(
+                file_id=file_id,
+                file_name=file_name,
+                suggested_folder=suggested_folder,
+                is_new_folder=is_new,
+                confidence="high" if matched_keyword else "medium",
+                reasoning=f"Matched keyword '{matched_keyword}' in filename"
+            )
+        
+        # no keyword match - suggest "Uncategorized" or a generic folder
+        return ClassificationResult(
+            file_id=file_id,
+            file_name=file_name,
+            suggested_folder="Miscellaneous",
+            is_new_folder="Miscellaneous" not in existing_folders,
+            confidence="low",
+            reasoning="No clear category detected from filename"
+        )
+
 # ai powered classifier using Google Gemini
 class FileClassifier:
     # initilize classifier with Gemini
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: Optional[str] = None, use_mock: bool = False):
+        self.use_mock = use_mock
+        
+        if use_mock:
+            self._mock = MockClassifier()
+            return
+        
+        # import Gemini only if we're using real API
+        try:
+            import google.generativeai as genai
+            self._genai = genai
+        except ImportError:
+            raise ImportError(
+                "google-generativeai not installed. "
+                "Run: pip install google-generativeai"
+            )
+        
         self.api_key = api_key or os.getenv("GEMINI_API_KEY")
 
         if not self.api_key:
@@ -79,6 +200,12 @@ IMPORTANT:
     
     # classify file into folder
     def classify_file(self, file_name: str, file_id: str, existing_folders: list[str], file_content_snippet: Optional[str] = None) -> ClassificationResult:
+        # if using mock mode, delegate to mock classifier
+        if self.use_mock:
+            return self._mock.classify_file(
+                file_name, file_id, existing_folders, file_content_snippet
+            )
+        
         # build user message
         user_message = f"FILE TO CLASSIFY: {file_name}"
 
@@ -145,7 +272,9 @@ IMPORTANT:
         results = []
         total = len(files)
 
-        print(f"Classifying {total} files...\n")
+        mode_label = "mock mode" if self.use_mock else "AI mode"
+        print(f"Classifying {total} files ({mode_label})...\n")
+
         all_folders = list(existing_folders) # copy to avoid modifying original
 
         for i, file in enumerate(files):
@@ -198,7 +327,7 @@ if __name__ == "__main__":
     
     try:
         # initialize the classifier
-        classifier = FileClassifier()
+        classifier = FileClassifier(use_mock=True)
         
         # classify all test files
         results = classifier.classify_multiple(test_files, existing_folders)
