@@ -8,7 +8,8 @@ class ClassificationResult:
     file_id: str                  
     file_name: str          
     suggested_folder: str  
-    is_new_folder: bool          
+    is_new_folder: bool 
+    confidence: str         
     reasoning: str  
 
 
