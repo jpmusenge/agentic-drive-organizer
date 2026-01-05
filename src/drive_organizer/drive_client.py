@@ -6,6 +6,55 @@ MIME_TYPE_DOCUMENT = 'application/vnd.google-apps.document'
 MIME_TYPE_SPREADSHEET = 'application/vnd.google-apps.spreadsheet'
 MIME_TYPE_PRESENTATION = 'application/vnd.google-apps.presentation'
 
+# extract text snippet from file content
+def get_file_content_snippet(service: Resource, file: dict, max_chars: int = 500) -> Optional[str]:
+    file_id = file.get('id')
+    mime_type = file.get('mimeType', '')
+    file_name = file.get('name', 'Unknown')
+    
+    try:
+        # google Docs, Sheets, Slides can be exported as plain text
+        if mime_type == MIME_TYPE_DOCUMENT:
+            # export Google Doc as plain text
+            content = service.files().export(
+                fileId=file_id,
+                mimeType='text/plain'
+            ).execute()
+            
+            if isinstance(content, bytes):
+                content = content.decode('utf-8', errors='ignore')
+            
+            return content[:max_chars] if content else None
+            
+        elif mime_type == MIME_TYPE_SPREADSHEET:
+            # export Google Sheet as CSV (1st sheet only)
+            content = service.files().export(
+                fileId=file_id,
+                mimeType='text/csv'
+            ).execute()
+            
+            if isinstance(content, bytes):
+                content = content.decode('utf-8', errors='ignore')
+            
+            return content[:max_chars] if content else None
+            
+        elif mime_type == MIME_TYPE_PRESENTATION:
+            # export Google Slides as plain text
+            content = service.files().export(
+                fileId=file_id,
+                mimeType='text/plain'
+            ).execute()
+            
+            if isinstance(content, bytes):
+                content = content.decode('utf-8', errors='ignore')
+            
+            return content[:max_chars] if content else None
+        
+        return None
+        
+    except Exception as e:
+        return None
+
 # generic function to list files with pagination support
 def list_files(service: Resource, page_size: int = 100, query: Optional[str] = None):
     all_files = []
