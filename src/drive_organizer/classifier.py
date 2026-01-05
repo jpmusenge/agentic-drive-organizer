@@ -180,11 +180,12 @@ IMPORTANT:
             
         
     # classify multiple files
-    def classify_multiple(self, files: list[str], existing_folders: list[str], progress_callback = None) -> list[ClassificationResult]:
+    def classify_multiple(self, files: list[str], existing_folders: list[str], extract_content: bool = False, progress_callback = None, service = None) -> list[ClassificationResult]:
         results = []
         total = len(files)
 
         mode_label = "mock mode" if self.use_mock else "AI mode"
+        content_label = " + content reading" if (extract_content and not self.use_mock) else ""
         print(f"Classifying {total} files ({mode_label})...\n")
 
         all_folders = list(existing_folders) # copy to avoid modifying original
@@ -193,10 +194,25 @@ IMPORTANT:
             file_name = file.get('name', 'Untitled')
             file_id = file.get('id', '')
 
+            print(f"  [{i+1}/{total}] {file_name[:50]}...")
+            
+            # extract content if requested and service is available
+            content_snippet = None
+            if extract_content and service and not self.use_mock:
+                try:
+                    # import here to avoid circular imports
+                    from drive_client import get_file_content_snippet
+                    content_snippet = get_file_content_snippet(service, file)
+                    if content_snippet:
+                        print(f"           (read {len(content_snippet)} chars of content)")
+                except Exception as e:
+                    pass  
+
             result = self.classify_file(
                 file_name=file_name,
                 file_id=file_id,
-                existing_folders=all_folders
+                existing_folders=all_folders,
+                file_content_snippet=content_snippet
             )
 
             # if suggests new folder, add it to our list
@@ -226,6 +242,11 @@ if __name__ == "__main__":
         {"id": "3", "name": "IMG_20240615_vacation_beach.jpg"},
         {"id": "4", "name": "Q3_Budget_Analysis.xlsx"},
         {"id": "5", "name": "Cover_Letter_Google.pdf"},
+        {"id": "6", "name": "flight_itinerary_nyc.pdf"},
+        {"id": "7", "name": "MANSA MUSA AND ISLAM IN AFRICA.docx"},
+        {"id": "8", "name": "SOS-231-1 Chapter 8 Quiz"},
+        {"id": "9", "name": "African Diaspora I - Assignment 2"},
+        {"id": "10", "name": "ISA Meeting Notes - June 7"},
     ]
     
     # simulate some existing folders
@@ -258,7 +279,7 @@ if __name__ == "__main__":
             by_folder[folder]["files"].append(r)
         
         for folder, data in sorted(by_folder.items()):
-            status = "📁 NEW" if data["is_new"] else "📂"
+            status = "NEW" if data["is_new"] else "FOLDER EXISTS"
             print(f"\n{status} {folder}")
             for r in data["files"]:
                 print(f"    └── {r.file_name}")
