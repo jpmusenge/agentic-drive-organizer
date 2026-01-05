@@ -421,6 +421,8 @@ if __name__ == "__main__":
         use_mock = False
     if '--dry-run' in sys.argv:
         dry_run = True
+    if '--read-content' in sys.argv:
+        read_content = True
     if '--help' in sys.argv:
         print("""
 Google Drive Organizer
@@ -430,12 +432,14 @@ Usage: python organizer.py [options]
 Options:
     --ai        Use real AI classifier (requires API quota)
     --dry-run   Show plan but don't execute
+    --read-content  Read file contents for smarter classification (AI mode only)
     --help      Show this help message
 
 Examples:
     python organizer.py              # Mock mode, interactive
     python organizer.py --dry-run    # Preview what would happen
     python organizer.py --ai         # Use real Gemini AI
+    python organizer.py --ai --read-content  # AI + read file contents (smartest)
 """)
         sys.exit(0)
     
