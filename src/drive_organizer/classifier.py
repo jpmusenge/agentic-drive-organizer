@@ -185,7 +185,7 @@ IMPORTANT:
         total = len(files)
 
         mode_label = "mock mode" if self.use_mock else "AI mode"
-        content_label = " + content reading" if (extract_content and not self.use_mock) else ""
+        content_label = " + content reading" if (extract_content) else ""
         print(f"Classifying {total} files ({mode_label})...\n")
 
         all_folders = list(existing_folders) # copy to avoid modifying original
@@ -198,13 +198,13 @@ IMPORTANT:
             
             # extract content if requested and service is available
             content_snippet = None
-            if extract_content and service and not self.use_mock:
+            if extract_content and service:
                 try:
                     # import here to avoid circular imports
                     from drive_client import get_file_content_snippet
                     content_snippet = get_file_content_snippet(service, file)
                     if content_snippet:
-                        print(f"           (read {len(content_snippet)} chars of content)")
+                        print(f"      (read {len(content_snippet)} chars of content)")
                 except Exception as e:
                     pass  
 

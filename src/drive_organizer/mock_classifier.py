@@ -131,12 +131,24 @@ class MockClassifier:
         # try to match patterns
         suggested_folder = None
         matched_pattern = None
+        match_source = "filename"
         
         for pattern, folder in self.KEYWORD_RULES:
             if re.search(pattern, name_lower):
                 suggested_folder = folder
                 matched_pattern = pattern
+                match_source = "filename"
                 break
+
+        # 2nd pass: if no filename match and content is provided, check content
+        if not suggested_folder and file_content_snippet:
+            content_lower = file_content_snippet.lower()
+            for pattern, folder in self.KEYWORD_RULES:
+                if re.search(pattern, content_lower):
+                    suggested_folder = folder
+                    matched_pattern = pattern
+                    match_source = "file content"
+                    break
         
         # check if the suggested folder exists
         if suggested_folder:
@@ -152,8 +164,8 @@ class MockClassifier:
                 file_name=file_name,
                 suggested_folder=suggested_folder,
                 is_new_folder=is_new,
-                confidence="high",
-                reasoning=f"Matched pattern '{matched_pattern}' in filename"
+                confidence="high" if match_source == "filename" else "medium",
+                reasoning=f"Matched pattern '{matched_pattern}' in {match_source}"
             )
         
         # no pattern match - try to infer from file structure
