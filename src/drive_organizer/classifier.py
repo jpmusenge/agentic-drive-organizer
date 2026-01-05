@@ -177,17 +177,41 @@ Given a file name, decide where it should be organized. You have two options:
 1. Place it in an EXISTING folder (if it's a good match)
 2. Suggest a NEW folder name (if no existing folder fits well)
 
-RULES FOR SUGGESTING NEW FOLDERS:
-- Only suggest a new folder if no existing folder is appropriate
+CRITICAL RULES:
+- NEVER use "Miscellaneous" or "Uncategorized" as a folder name
+- ALWAYS suggest a SPECIFIC, descriptive folder name
+- When in doubt, create a new specific folder rather than using a generic one
+- Look for context clues: course codes (SOS-231, ORT 111), subjects (Egypt, Biology, Sociology), 
+  document types (Essay, Quiz, Assignment, Presentation)
+
+FOLDER NAMING GUIDELINES:
 - Use clear, concise folder names (2-4 words max)
-- Use Title Case (e.g., "Job Applications" not "job applications")
-- Be consistent - similar files should go in the same folder
-- Common good folder names: "Job Applications", "Course Notes", "Personal Documents", 
-  "Financial Records", "Travel Documents", "Receipts", "Projects", "Research Papers"
+- Use Title Case (e.g., "History Essays" not "history essays")
+- Be specific: "African History" is better than "History"
+- Group by PURPOSE or SUBJECT, not just file type
+
+GOOD FOLDER EXAMPLES:
+- "African History" (for Mansa Musa, Egyptian, Diaspora content)
+- "Social Sciences" (for sociology, anthropology content)  
+- "Biology Coursework" (for biology assignments, labs)
+- "Computer Science" (for programming, algorithms)
+- "Speech Class" (for speech drafts, presentations)
+- "Internship Applications" (for specific job/internship apps)
+- "Personal Documents" (for IDs, transcripts, forms)
+- "ISA Documents" (for International Students Association files)
+- "Research Papers" (for academic research)
+- "Hackathon Projects" (for competition/hackathon files)
+
+BAD FOLDER EXAMPLES (NEVER USE):
+- "Miscellaneous"
+- "Other" 
+- "Uncategorized"
+- "Random"
+- "Stuff" 
 
 RESPOND WITH ONLY A JSON OBJECT in this exact format:
 {{
-    "suggested_folder": "Folder Name Here",
+    "suggested_folder": "Specific Folder Name Here",
     "is_new_folder": true or false,
     "confidence": "high" or "medium" or "low",
     "reasoning": "Brief explanation of why this folder fits"
